@@ -18,24 +18,25 @@ class UpdateChecker:
     def __init__(self, app):
         self.app = app
         self.api_url = "https://api.github.com/repos/inxtoot/OnWatch/releases/latest"
-        self.current_version = VERSION  # ★ 从 version.py 读取
+        self.current_version = VERSION
 
+        # ★ 所有镜像 URL 都改为指向 OnWatch_{}.exe（与 Release 中的实际文件名匹配）
         self.mirror_urls = [
             {
                 "name": "ghproxy.net",
-                "url": "https://ghproxy.net/https://github.com/inxtoot/OnWatch/releases/download/{}/OnWatch.exe"
+                "url": "https://ghproxy.net/https://github.com/inxtoot/OnWatch/releases/download/{}/OnWatch_{}.exe"
             },
             {
                 "name": "ghproxy.cxkpro.top",
-                "url": "https://ghproxy.cxkpro.top/https://github.com/inxtoot/OnWatch/releases/download/{}/OnWatch.exe"
+                "url": "https://ghproxy.cxkpro.top/https://github.com/inxtoot/OnWatch/releases/download/{}/OnWatch_{}.exe"
             },
             {
                 "name": "gitclone.com",
-                "url": "https://gitclone.com/inxtoot/OnWatch/releases/download/{}/OnWatch.exe"
+                "url": "https://gitclone.com/inxtoot/OnWatch/releases/download/{}/OnWatch_{}.exe"
             },
             {
-                "name": "百度网盘（备用）",
-                "url": "https://pan.baidu.com/s/xxxx"
+                "name": "GitHub 官方",
+                "url": "https://github.com/inxtoot/OnWatch/releases/download/{}/OnWatch_{}.exe"
             }
         ]
 
@@ -148,7 +149,9 @@ class UpdateChecker:
         cancel_btn.pack(side='right')
 
     def _download_update(self, dialog, url_template, tag):
-        download_url = url_template.format(tag)
+        # ★ 关键修改：两个 {} 占位符，分别替换为 tag（版本号）和 tag（文件名中的版本号）
+        download_url = url_template.format(tag, tag)
+        print(f"🌐 下载链接: {download_url}")
         webbrowser.open(download_url)
         dialog.destroy()
 
