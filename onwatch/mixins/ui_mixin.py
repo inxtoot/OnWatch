@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
+from functools import partial
 import re
 
 
@@ -31,7 +32,7 @@ class UIMixin:
         menubar.add_cascade(label="免责声明", menu=legal_menu)
         legal_menu.add_command(label="查看法律声明", command=self.open_legal_notice)
 
-        # ⭐ 新增：帮助菜单（检查更新）
+        # ---------- 帮助菜单 ----------
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="帮助", menu=help_menu)
         help_menu.add_command(label="检查更新", command=self.manual_check_update)
@@ -229,8 +230,12 @@ class UIMixin:
                         btn_state = 'disabled'
                         btn_bg = '#7f8c8d'
                     cells[f'status{j}'].config(text=status_text, bg=status_bg, fg=status_fg)
-                    cells[f'btn{j}'].config(state=btn_state, bg=btn_bg,
-                                           command=lambda c=digits, idx=j: self.manual_buy(c, idx))
+                    # ★ 使用 partial 替代 lambda 默认参数，更清晰
+                    cells[f'btn{j}'].config(
+                        state=btn_state,
+                        bg=btn_bg,
+                        command=partial(self.manual_buy, digits, j)
+                    )
         else:
             for i in range(5):
                 cells = self.monitor_cells[i]
@@ -271,8 +276,12 @@ class UIMixin:
                         btn_state = 'disabled'
                         btn_bg = '#7f8c8d'
                     cells[f'status{j}'].config(text=status_text, bg=status_bg, fg=status_fg)
-                    cells[f'btn{j}'].config(state=btn_state, bg=btn_bg,
-                                           command=lambda c=digits, idx=j: self.manual_buy(c, idx))
+                    # ★ 使用 partial 替代 lambda 默认参数
+                    cells[f'btn{j}'].config(
+                        state=btn_state,
+                        bg=btn_bg,
+                        command=partial(self.manual_buy, digits, j)
+                    )
 
     # ---------- 持仓区刷新 ----------
     def refresh_position_display(self, full_rebuild=False):
@@ -365,6 +374,8 @@ class UIMixin:
         return sorted(positions_copy, key=sort_key, reverse=self.sort_reverse)
 
     def _create_position_row(self, pos):
+        from functools import partial
+
         frame = tk.Frame(self.position_inner, bg='#f7fcff')
         frame.pack(fill='x', pady=1)
 
@@ -391,8 +402,14 @@ class UIMixin:
         label_status = tk.Label(frame, text="", font=('微软雅黑',8), width=8)
         label_status.grid(row=0, column=5, padx=1)
 
-        btn = tk.Button(frame, text="记录卖出", font=('微软雅黑',7), width=7,
-                        command=lambda pid=pos['pos_id']: self.manual_sell(pid))
+        # ★ 使用 partial 替代 lambda 默认参数
+        btn = tk.Button(
+            frame,
+            text="记录卖出",
+            font=('微软雅黑',7),
+            width=7,
+            command=partial(self.manual_sell, pos['pos_id'])
+        )
         btn.grid(row=0, column=6, padx=1)
 
         self.position_rows[pos['pos_id']] = [frame, label_code, label_buy, label_shares,
@@ -491,9 +508,8 @@ class UIMixin:
         from ..dialogs import LegalNoticeWindow
         LegalNoticeWindow(self)
 
-    # ⭐ 新增：手动检查更新（调用主类的方法）
     def manual_check_update(self):
-        """由菜单『检查更新』触发，通过主类实例调用更新检查器"""
+        """由菜单『检查更新』触发"""
         if hasattr(self, 'updater'):
             self.updater.check_for_updates(show_no_update=True)
         else:

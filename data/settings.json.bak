@@ -1,0 +1,35 @@
+{
+  "stock_codes": [
+    "600580",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "stock_pool": {
+    "600580": {
+      "price": 29.63,
+      "price_valid": true,
+      "support_prices": [
+        1.0,
+        66.0,
+        22.0
+      ],
+      "support_processed": [
+        false,
+        true,
+        false
+      ],
+      "buy_script": "20260729_1",
+      "sell_script": "20260729_1"
+    }
+  },
+  "shares_per_trade": 500,
+  "take_profit": 3.0,
+  "stop_loss": 3.0,
+  "loop_count": 1,
+  "sample_enabled": false,
+  "sample_interval": 10,
+  "precision_mode": false,
+  "password": "123"
+}
