@@ -11,7 +11,7 @@ from tkinter import messagebox
 
 
 class DataMixin:
-    """数据持久化、交易计算、手动买卖、日志（带轮转）"""
+    """数据持久化、交易计算、手动买卖、日志（带轮转 + 备份恢复）"""
 
     # ---------- 日志（使用 logging 模块，自动轮转） ----------
     def _get_logger(self):
@@ -20,7 +20,7 @@ class DataMixin:
             self._rotating_logger = logging.getLogger('OnWatch')
             self._rotating_logger.setLevel(logging.INFO)
             if not self._rotating_logger.handlers:
-                # ★ 标准型配置：单文件 5MB，保留 20 个备份，总占用约 105 MB
+                # 标准型配置：单文件 5MB，保留 20 个备份，总占用约 105 MB
                 handler = logging.handlers.RotatingFileHandler(
                     self.log_file,
                     maxBytes=5 * 1024 * 1024,  # 5 MB
@@ -38,13 +38,11 @@ class DataMixin:
         log_line = f"{timestamp} - {msg}\n"
 
         def _add():
-            # 1. 写入 GUI 文本框
             if hasattr(self, 'log_text') and self.log_text:
                 self.log_text.config(state='normal')
                 self.log_text.insert('end', log_line)
                 self.log_text.see('end')
                 self.log_text.config(state='disabled')
-            # 2. 通过 logging 模块写入文件（自动轮转）
             self._get_logger().info(msg)
 
         if threading.current_thread() is threading.main_thread():
@@ -52,12 +50,13 @@ class DataMixin:
         else:
             self.root.after(0, _add)
 
-    # ---------- 配置保存/加载 ----------
+    # ---------- 配置保存/加载（带备份恢复） ----------
     def save_config(self):
+        """保存配置：原子写入 + 备份"""
         geometry = self.root.geometry()
         try:
-            with open(self.window_geometry_file, 'w', encoding='utf-8') as f:
-                json.dump({'window_geometry': geometry}, f, indent=2)
+            # 窗口几何配置单独保存
+            self._save_json_atomically(self.window_geometry_file, {'window_geometry': geometry})
         except Exception as e:
             self.log(f"保存窗口几何失败: {e}")
 
@@ -75,70 +74,105 @@ class DataMixin:
                 'password': self.password
             }
         try:
-            with open(self.settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, indent=2, ensure_ascii=False)
+            self._save_json_atomically(self.settings_file, settings)
         except Exception as e:
             self.log(f"保存设置失败: {e}")
 
     def load_config(self):
+        """加载配置：主文件损坏时自动从备份恢复"""
+        # 加载窗口几何
         if os.path.exists(self.window_geometry_file):
-            try:
-                with open(self.window_geometry_file, 'r', encoding='utf-8') as f:
-                    geom_data = json.load(f)
-                if 'window_geometry' in geom_data:
-                    self.root.geometry(geom_data['window_geometry'])
-            except Exception as e:
-                self.log(f"加载窗口几何失败: {e}")
+            data = self._load_json_with_backup(self.window_geometry_file)
+            if data and 'window_geometry' in data:
+                self.root.geometry(data['window_geometry'])
 
+        # 加载其他设置
         if os.path.exists(self.settings_file):
-            try:
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
-                    cfg = json.load(f)
+            data = self._load_json_with_backup(self.settings_file)
+            if data:
                 with self.data_lock:
-                    self.stock_codes = cfg.get('stock_codes', self.stock_codes)
-                    self.stock_pool = cfg.get('stock_pool', {})
+                    self.stock_codes = data.get('stock_codes', self.stock_codes)
+                    self.stock_pool = data.get('stock_pool', {})
                     for v in self.stock_pool.values():
-                        v.setdefault('support_processed', [False,False,False])
+                        v.setdefault('support_processed', [False, False, False])
                         v.setdefault('price_valid', False)
                         v.setdefault('buy_script', '')
                         v.setdefault('sell_script', '')
-                    self.shares_per_trade = cfg.get('shares_per_trade', self.shares_per_trade)
-                    self.take_profit = cfg.get('take_profit', 1.0)
-                    self.stop_loss = cfg.get('stop_loss', 1.0)
-                    self.loop_count = cfg.get('loop_count', 1)
-                    self.sample_enabled.set(cfg.get('sample_enabled', False))
-                    self.sample_interval.set(cfg.get('sample_interval', 10))
-                    self.precision_mode.set(cfg.get('precision_mode', False))
-                    self.password = cfg.get('password', '123')
-            except Exception as e:
-                self.log(f"加载设置失败: {e}")
+                    self.shares_per_trade = data.get('shares_per_trade', self.shares_per_trade)
+                    self.take_profit = data.get('take_profit', 1.0)
+                    self.stop_loss = data.get('stop_loss', 1.0)
+                    self.loop_count = data.get('loop_count', 1)
+                    self.sample_enabled.set(data.get('sample_enabled', False))
+                    self.sample_interval.set(data.get('sample_interval', 10))
+                    self.precision_mode.set(data.get('precision_mode', False))
+                    self.password = data.get('password', '123')
 
-    # ---------- 持仓保存/加载 ----------
-    def _save_positions_snapshot(self, snapshot):
-        data = {'positions': snapshot, 'next_pos_id': self.next_pos_id}
+    # ---------- 原子写入和备份恢复工具函数 ----------
+    def _save_json_atomically(self, filepath, data):
+        """原子方式保存 JSON：先写临时文件，再替换，同时备份"""
+        temp_file = filepath + '.tmp'
+        backup_file = filepath + '.bak'
+
+        # 写入临时文件
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.flush()
+            os.fsync(f.fileno())  # 确保数据写入磁盘
+
+        # 原子替换
+        os.replace(temp_file, filepath)
+
+        # 同时备份一份
+        with open(backup_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def _load_json_with_backup(self, filepath):
+        """加载 JSON：主文件失败时自动从备份恢复"""
+        # 尝试加载主文件
         try:
-            with open(self.positions_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            self.log(f"保存持仓记录失败: {e}")
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+            self.log(f"加载 {filepath} 失败: {e}，尝试从备份恢复")
+
+        # 尝试从备份恢复
+        backup_file = filepath + '.bak'
+        if os.path.exists(backup_file):
+            try:
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                self.log(f"✅ 从备份 {backup_file} 恢复成功")
+                # 将恢复的数据写回主文件
+                try:
+                    self._save_json_atomically(filepath, data)
+                except Exception as e2:
+                    self.log(f"恢复后写入主文件失败: {e2}")
+                return data
+            except Exception as e:
+                self.log(f"从备份恢复失败: {e}")
+
+        self.log(f"⚠️ 无法恢复 {filepath}，使用默认值")
+        return None
+
+    # ---------- 持仓保存/加载（带备份恢复） ----------
+    def _save_positions_snapshot(self, snapshot):
+        """保存持仓快照（原子写入 + 备份）"""
+        data = {'positions': snapshot, 'next_pos_id': self.next_pos_id}
+        self._save_json_atomically(self.positions_file, data)
 
     def save_positions(self):
         with self.data_lock:
             data = {'positions': self.positions, 'next_pos_id': self.next_pos_id}
-        try:
-            with open(self.positions_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            self.log(f"保存持仓记录失败: {e}")
+        self._save_json_atomically(self.positions_file, data)
 
     def load_positions(self):
         if not os.path.exists(self.positions_file):
             self.positions = []
             self.next_pos_id = 0
             return
-        try:
-            with open(self.positions_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+
+        data = self._load_json_with_backup(self.positions_file)
+        if data:
             with self.data_lock:
                 self.positions = data.get('positions', [])
                 self.next_pos_id = data.get('next_pos_id', 0)
@@ -157,13 +191,13 @@ class DataMixin:
                     if self.next_pos_id <= max_id:
                         self.next_pos_id = max_id + 1
             self.log(f"已加载 {len(self.positions)} 条持仓记录")
-        except Exception as e:
-            self.log(f"加载持仓记录失败: {e}")
+        else:
             self.positions = []
             self.next_pos_id = 0
 
-    # ---------- 历史保存/加载 ----------
+    # ---------- 历史保存/加载（带备份恢复） ----------
     def _save_history_snapshot(self, snapshot):
+        """保存历史快照（原子写入 + 备份）"""
         cutoff = datetime.now() - timedelta(days=35)
         filtered = []
         for h in snapshot:
@@ -180,11 +214,7 @@ class DataMixin:
                     filtered.append(h)
             except:
                 filtered.append(h)
-        try:
-            with open(self.history_file, 'w', encoding='utf-8') as f:
-                json.dump(filtered, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            self.log(f"保存历史记录失败: {e}")
+        self._save_json_atomically(self.history_file, filtered)
 
     def save_history(self):
         cutoff = datetime.now() - timedelta(days=35)
@@ -205,24 +235,19 @@ class DataMixin:
                 except:
                     filtered.append(h)
             self.history = filtered
-        try:
-            with open(self.history_file, 'w', encoding='utf-8') as f:
-                json.dump(filtered, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            self.log(f"保存历史记录失败: {e}")
+        self._save_json_atomically(self.history_file, filtered)
 
     def load_history(self):
         if not os.path.exists(self.history_file):
             self.history = []
             return
-        try:
-            with open(self.history_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+
+        data = self._load_json_with_backup(self.history_file)
+        if data:
             with self.data_lock:
                 self.history = data
             self.log(f"已加载 {len(self.history)} 条历史记录")
-        except Exception as e:
-            self.log(f"加载历史记录失败: {e}")
+        else:
             self.history = []
 
     # ---------- 交易费用计算 ----------
