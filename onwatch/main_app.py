@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pynput import keyboard, mouse
 
 from .mixins import DataMixin, NetworkMixin, PlaybackMixin, UIMixin
-from .updater import UpdateChecker   # 新增更新模块
+from .updater import UpdateChecker, get_version
 
 
 class IntegratedApp(DataMixin, NetworkMixin, PlaybackMixin, UIMixin):
@@ -17,7 +17,8 @@ class IntegratedApp(DataMixin, NetworkMixin, PlaybackMixin, UIMixin):
 
     def __init__(self, root):
         self.root = root
-        self.root.title("OnWatch v1.6（个人学习）")
+        # ★ 窗口标题显示版本号（v1.6.0）
+        self.root.title(f"OnWatch {get_version()}（个人学习）")
         self.root.geometry("580x600")
         self.root.minsize(580, 600)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -101,13 +102,12 @@ class IntegratedApp(DataMixin, NetworkMixin, PlaybackMixin, UIMixin):
 
         # ---------- 初始化更新检查器（静默检测） ----------
         self.updater = UpdateChecker(self)
-        self.updater.check_for_updates()   # 后台线程检测，不阻塞界面
+        self.updater.check_for_updates()
 
         self.log("程序启动成功")
 
-    # ---------- 手动检查更新（供菜单调用） ----------
+    # ---------- 手动检查更新 ----------
     def manual_check_update(self):
-        """用户从菜单点击『检查更新』时调用"""
         if hasattr(self, 'updater'):
             self.updater.check_for_updates(show_no_update=True)
         else:

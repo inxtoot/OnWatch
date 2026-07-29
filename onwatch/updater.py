@@ -21,7 +21,8 @@ class UpdateChecker:
     def __init__(self, app):
         self.app = app
         self.api_url = "https://api.github.com/repos/inxtoot/OnWatch/releases/latest"
-        self.current_version = "v1.6"
+        # ★ 版本号改为三位语义化格式（v1.6.0），与 OnAct 保持一致
+        self.current_version = "v1.6.0"
 
         # 下载镜像列表（仿照 OnAct）
         self.mirror_urls = [
@@ -63,7 +64,6 @@ class UpdateChecker:
                         return
 
             except Exception:
-                # 网络错误、SSL 错误等全部静默忽略
                 pass
 
             if show_no_update:
@@ -73,7 +73,6 @@ class UpdateChecker:
 
     def _show_update_dialog(self, latest_version, current_version, release_notes):
         """仿照 OnAct 风格的更新对话框"""
-        # 创建窗口
         dialog = Toplevel(self.app.root)
         dialog.title("发现新版本")
         dialog.geometry("450x250")
@@ -82,13 +81,11 @@ class UpdateChecker:
         dialog.transient(self.app.root)
         dialog.grab_set()
         dialog.resizable(False, False)
-        dialog.attributes('-topmost', True)  # 置顶显示
+        dialog.attributes('-topmost', True)
 
-        # 主容器
         main_frame = Frame(dialog, padx=20, pady=15)
         main_frame.pack(fill='both', expand=True)
 
-        # 版本信息
         version_label = Label(
             main_frame,
             text=f"检测到新版本 {latest_version}（当前版本 {current_version}）",
@@ -98,7 +95,6 @@ class UpdateChecker:
         )
         version_label.pack(anchor='w', pady=(0, 5))
 
-        # 提示文字
         hint_label = Label(
             main_frame,
             text="请选择下载镜像（若镜像失效请换另一个）：",
@@ -109,11 +105,9 @@ class UpdateChecker:
         )
         hint_label.pack(anchor='w', pady=(0, 15))
 
-        # 镜像按钮区域（2行 x 2列）
         btn_frame = Frame(main_frame)
         btn_frame.pack(fill='x', pady=(0, 15))
 
-        # 每行2个按钮，使用 grid 布局
         for i, mirror in enumerate(self.mirror_urls):
             row = i // 2
             col = i % 2
@@ -130,11 +124,9 @@ class UpdateChecker:
             )
             btn.grid(row=row, column=col, padx=10, pady=5, sticky='ew')
 
-        # 设置列权重，使按钮均匀分布
         btn_frame.columnconfigure(0, weight=1)
         btn_frame.columnconfigure(1, weight=1)
 
-        # 底部按钮
         btn_bottom_frame = Frame(main_frame)
         btn_bottom_frame.pack(fill='x', pady=(10, 0))
 
@@ -150,19 +142,15 @@ class UpdateChecker:
         cancel_btn.pack(side='right')
 
     def _download_update(self, dialog, url_template, tag):
-        """打开浏览器下载更新，并关闭对话框"""
         download_url = url_template.format(tag)
 
-        # 百度网盘特殊处理：直接打开链接
         if "pan.baidu.com" in download_url:
             webbrowser.open(download_url)
         else:
             webbrowser.open(download_url)
 
-        # 关闭对话框
         dialog.destroy()
 
-        # 提示用户
         messagebox.showinfo(
             "下载提示",
             "浏览器已打开下载页面。\n\n"
@@ -171,10 +159,10 @@ class UpdateChecker:
         )
 
 
-# -------------------- 版本号管理 --------------------
-VERSION = "v1.6"
+# -------------------- 版本号管理（三位语义化版本） --------------------
+VERSION = "v1.6.0"  # ★ 与 OnAct 保持一致的三位版本号
 
 
 def get_version():
-    """返回当前版本号"""
+    """返回当前版本号（v1.6.0 格式）"""
     return VERSION
