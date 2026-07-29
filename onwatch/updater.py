@@ -6,8 +6,9 @@ import os
 import sys
 from tkinter import messagebox, Toplevel, Button, Label, Frame
 from packaging import version
+from .version import VERSION, get_version
 
-# ★ 强制绕过 SSL 验证（解决 GitHub API 证书问题）
+# 强制绕过 SSL 验证（解决 GitHub API 证书问题）
 VERIFY_PATH = False
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -17,7 +18,7 @@ class UpdateChecker:
     def __init__(self, app):
         self.app = app
         self.api_url = "https://api.github.com/repos/inxtoot/OnWatch/releases/latest"
-        self.current_version = "v1.7.1"
+        self.current_version = VERSION  # ★ 从 version.py 读取
 
         self.mirror_urls = [
             {
@@ -61,7 +62,7 @@ class UpdateChecker:
                     print(f"📦 当前版本: {self.current_version}")
 
                     if latest_version and version.parse(latest_version) > version.parse(self.current_version):
-                        print("✅ 检测到新版本！准备弹出更新对话框")
+                        print("✅ 检测到新版本！")
                         self.app.root.after(0, lambda: self._show_update_dialog(
                             latest_version,
                             self.current_version,
@@ -159,8 +160,6 @@ class UpdateChecker:
         )
 
 
-VERSION = "v1.1.0"
-
-
+# 为了兼容旧代码，保留 get_version 函数
 def get_version():
     return VERSION

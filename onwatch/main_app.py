@@ -9,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pynput import keyboard, mouse
 
 from .mixins import DataMixin, NetworkMixin, PlaybackMixin, UIMixin
-from .updater import UpdateChecker, get_version
+from .updater import UpdateChecker
+from .version import get_version
 
 
 class IntegratedApp(DataMixin, NetworkMixin, PlaybackMixin, UIMixin):
@@ -17,8 +18,7 @@ class IntegratedApp(DataMixin, NetworkMixin, PlaybackMixin, UIMixin):
 
     def __init__(self, root):
         self.root = root
-        # ★ 窗口标题显示版本号（v1.6.0）
-        self.root.title(f"OnWatch {get_version()}（个人学习）")
+        self.root.title(f"OnWatch {get_version()}（学习版）")
         self.root.geometry("580x600")
         self.root.minsize(580, 600)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
