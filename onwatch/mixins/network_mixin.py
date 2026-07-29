@@ -90,11 +90,14 @@ class NetworkMixin:
                         if not data['support_processed'][idx] and price <= sp:
                             buy_actions.append((code, idx, price, sp))
 
+            # ★★★ 修改一：卖出动作收集增加 price_valid 检查 ★★★
+            # 只有本次成功获取价格的股票才检查卖出条件
             sell_actions = []
             for pos in positions_snapshot:
                 if pos['sold'] or pos.get('selling', False):
                     continue
                 code = pos['stock_code']
+                # ★ 关键：如果本次刷新没有获取到该股票的价格，跳过卖出检查
                 if code not in price_results:
                     continue
                 last_price = price_results[code]
@@ -109,6 +112,12 @@ class NetworkMixin:
 
             # ---- 应用修改（短时加锁） ----
             with self.data_lock:
+                # ★★★ 修改一：先将监控股票的价格有效性全部重置为 False ★★★
+                for code in monitor_codes:
+                    if code in self.stock_pool:
+                        self.stock_pool[code]['price_valid'] = False
+
+                # ★★★ 修改一：只将成功获取的股票标记为有效并更新价格 ★★★
                 for code, price in price_results.items():
                     if code in self.stock_pool:
                         self.stock_pool[code]['price'] = price
@@ -122,12 +131,15 @@ class NetworkMixin:
                             'buy_script': '',
                             'sell_script': ''
                         }
+
+                # 更新持仓的最新价格（只更新成功获取的股票）
                 for pos in self.positions:
                     if not pos['sold'] and pos['stock_code'] in price_results:
                         pos['last_price'] = price_results[pos['stock_code']]
                         if pos['last_price'] > pos.get('highest_price', pos['buy_price']):
                             pos['highest_price'] = pos['last_price']
 
+                # 处理买入标记
                 pending_buy = []
                 for code, idx, price, sp in buy_actions:
                     if code in self.stock_pool:
@@ -135,6 +147,7 @@ class NetworkMixin:
                             self.stock_pool[code]['support_processed'][idx] = True
                             pending_buy.append((code, idx, price, sp))
 
+                # 处理卖出标记
                 pending_sell = []
                 for pos_id, last_price, pnl, sell_script in sell_actions:
                     for pos in self.positions:

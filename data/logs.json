@@ -2,6 +2,106 @@
   {
     "type": "buy",
     "stock_code": "600580",
+    "buy_price": 66.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:55:44",
+    "sell_price": null,
+    "sold_time": null,
+    "sold_pnl": null
+  },
+  {
+    "type": "sell",
+    "stock_code": "600580",
+    "buy_price": 66.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:55:44",
+    "sell_price": 29.63,
+    "sold_time": "2026-07-29 22:13:36",
+    "sold_pnl": -18214.637650000004
+  },
+  {
+    "type": "buy",
+    "stock_code": "600580",
+    "buy_price": 44.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:35:20",
+    "sell_price": null,
+    "sold_time": null,
+    "sold_pnl": null
+  },
+  {
+    "type": "sell",
+    "stock_code": "600580",
+    "buy_price": 44.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:35:20",
+    "sell_price": 29.63,
+    "sold_time": "2026-07-29 21:39:05",
+    "sold_pnl": -7211.227649999999
+  },
+  {
+    "type": "buy",
+    "stock_code": "600580",
+    "buy_price": 55.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:33:27",
+    "sell_price": null,
+    "sold_time": null,
+    "sold_pnl": null
+  },
+  {
+    "type": "sell",
+    "stock_code": "600580",
+    "buy_price": 55.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:33:27",
+    "sell_price": 29.63,
+    "sold_time": "2026-07-29 21:37:12",
+    "sold_pnl": -12712.93265
+  },
+  {
+    "type": "buy",
+    "stock_code": "600580",
+    "buy_price": 66.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:25:53",
+    "sell_price": null,
+    "sold_time": null,
+    "sold_pnl": null
+  },
+  {
+    "type": "sell",
+    "stock_code": "600580",
+    "buy_price": 66.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:25:53",
+    "sell_price": 29.63,
+    "sold_time": "2026-07-29 21:31:07",
+    "sold_pnl": -18214.637650000004
+  },
+  {
+    "type": "buy",
+    "stock_code": "600580",
+    "buy_price": 55.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:24:00",
+    "sell_price": null,
+    "sold_time": null,
+    "sold_pnl": null
+  },
+  {
+    "type": "sell",
+    "stock_code": "600580",
+    "buy_price": 55.0,
+    "shares": 500,
+    "buy_time": "2026-07-29 21:24:00",
+    "sell_price": 29.63,
+    "sold_time": "2026-07-29 21:29:14",
+    "sold_pnl": -12712.93265
+  },
+  {
+    "type": "buy",
+    "stock_code": "600580",
     "buy_price": 35.0,
     "shares": 500,
     "buy_time": "2026-07-29 21:18:06",
@@ -38,105 +138,5 @@
     "sell_price": 29.63,
     "sold_time": "2026-07-29 21:18:22",
     "sold_pnl": -1709.5226500000008
-  },
-  {
-    "type": "buy",
-    "stock_code": "600580",
-    "buy_price": 55.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:24:00",
-    "sell_price": null,
-    "sold_time": null,
-    "sold_pnl": null
-  },
-  {
-    "type": "buy",
-    "stock_code": "600580",
-    "buy_price": 66.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:25:53",
-    "sell_price": null,
-    "sold_time": null,
-    "sold_pnl": null
-  },
-  {
-    "type": "sell",
-    "stock_code": "600580",
-    "buy_price": 55.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:24:00",
-    "sell_price": 29.63,
-    "sold_time": "2026-07-29 21:29:14",
-    "sold_pnl": -12712.93265
-  },
-  {
-    "type": "sell",
-    "stock_code": "600580",
-    "buy_price": 66.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:25:53",
-    "sell_price": 29.63,
-    "sold_time": "2026-07-29 21:31:07",
-    "sold_pnl": -18214.637650000004
-  },
-  {
-    "type": "buy",
-    "stock_code": "600580",
-    "buy_price": 55.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:33:27",
-    "sell_price": null,
-    "sold_time": null,
-    "sold_pnl": null
-  },
-  {
-    "type": "buy",
-    "stock_code": "600580",
-    "buy_price": 44.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:35:20",
-    "sell_price": null,
-    "sold_time": null,
-    "sold_pnl": null
-  },
-  {
-    "type": "sell",
-    "stock_code": "600580",
-    "buy_price": 55.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:33:27",
-    "sell_price": 29.63,
-    "sold_time": "2026-07-29 21:37:12",
-    "sold_pnl": -12712.93265
-  },
-  {
-    "type": "sell",
-    "stock_code": "600580",
-    "buy_price": 44.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:35:20",
-    "sell_price": 29.63,
-    "sold_time": "2026-07-29 21:39:05",
-    "sold_pnl": -7211.227649999999
-  },
-  {
-    "type": "buy",
-    "stock_code": "600580",
-    "buy_price": 66.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:55:44",
-    "sell_price": null,
-    "sold_time": null,
-    "sold_pnl": null
-  },
-  {
-    "type": "sell",
-    "stock_code": "600580",
-    "buy_price": 66.0,
-    "shares": 500,
-    "buy_time": "2026-07-29 21:55:44",
-    "sell_price": 29.63,
-    "sold_time": "2026-07-29 22:13:36",
-    "sold_pnl": -18214.637650000004
   }
 ]
