@@ -7,24 +7,18 @@ import sys
 from tkinter import messagebox, Toplevel, Button, Label, Frame
 from packaging import version
 
-# 优先使用 certifi 解决 SSL 证书问题
-try:
-    import certifi
-    VERIFY_PATH = certifi.where()
-except ImportError:
-    VERIFY_PATH = False
-    import urllib3
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# ★ 强制绕过 SSL 验证（解决 GitHub API 证书问题）
+VERIFY_PATH = False
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class UpdateChecker:
     def __init__(self, app):
         self.app = app
         self.api_url = "https://api.github.com/repos/inxtoot/OnWatch/releases/latest"
-        # ★ 版本号改为三位语义化格式（v1.6.0），与 OnAct 保持一致
-        self.current_version = "v1.6.0"
+        self.current_version = "v1.7.1"
 
-        # 下载镜像列表（仿照 OnAct）
         self.mirror_urls = [
             {
                 "name": "ghproxy.net",
@@ -40,22 +34,34 @@ class UpdateChecker:
             },
             {
                 "name": "百度网盘（备用）",
-                "url": "https://pan.baidu.com/s/xxxx"  # 需替换为实际链接
+                "url": "https://pan.baidu.com/s/xxxx"
             }
         ]
 
     def check_for_updates(self, show_no_update=False):
-        """检测更新：静默失败，不弹窗（除非 show_no_update=True）"""
         def _check():
             try:
-                response = requests.get(self.api_url, timeout=10, verify=VERIFY_PATH)
+                print("🔍 开始检查更新...")
+                response = requests.get(
+                    self.api_url,
+                    timeout=10,
+                    verify=VERIFY_PATH,
+                    headers={'User-Agent': 'OnWatch/1.0'}
+                )
+                print(f"📡 HTTP 状态码: {response.status_code}")
+
                 if response.status_code == 404:
+                    print("⚠️ 404: 没有找到 Release")
                     return
 
                 if response.status_code == 200:
                     data = response.json()
                     latest_version = data.get("tag_name", "")
+                    print(f"📦 最新版本: {latest_version}")
+                    print(f"📦 当前版本: {self.current_version}")
+
                     if latest_version and version.parse(latest_version) > version.parse(self.current_version):
+                        print("✅ 检测到新版本！准备弹出更新对话框")
                         self.app.root.after(0, lambda: self._show_update_dialog(
                             latest_version,
                             self.current_version,
@@ -63,8 +69,8 @@ class UpdateChecker:
                         ))
                         return
 
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"❌ 更新检查失败: {e}")
 
             if show_no_update:
                 self.app.root.after(0, lambda: messagebox.showinfo("检查更新", "当前已是最新版本。"))
@@ -72,7 +78,6 @@ class UpdateChecker:
         threading.Thread(target=_check, daemon=True).start()
 
     def _show_update_dialog(self, latest_version, current_version, release_notes):
-        """仿照 OnAct 风格的更新对话框"""
         dialog = Toplevel(self.app.root)
         dialog.title("发现新版本")
         dialog.geometry("450x250")
@@ -143,12 +148,7 @@ class UpdateChecker:
 
     def _download_update(self, dialog, url_template, tag):
         download_url = url_template.format(tag)
-
-        if "pan.baidu.com" in download_url:
-            webbrowser.open(download_url)
-        else:
-            webbrowser.open(download_url)
-
+        webbrowser.open(download_url)
         dialog.destroy()
 
         messagebox.showinfo(
@@ -159,10 +159,8 @@ class UpdateChecker:
         )
 
 
-# -------------------- 版本号管理（三位语义化版本） --------------------
-VERSION = "v1.6.0"  # ★ 与 OnAct 保持一致的三位版本号
+VERSION = "v1.1.0"
 
 
 def get_version():
-    """返回当前版本号（v1.6.0 格式）"""
     return VERSION

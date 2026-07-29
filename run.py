@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-OnWatch v1.6（学习版） - 启动入口
+OnWatch v1.7.1（学习版） - 启动入口
 """
 
 from onwatch.main_app import IntegratedApp
